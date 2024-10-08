@@ -36,9 +36,11 @@
         async function scanForDevices() {
             try {
                 // Request the device with the given service UUID
-                const devices = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [serviceUuid] }]
-                });
+                bleDevice = await navigator.bluetooth.requestDevice({
+    acceptAllDevices: true,
+    optionalServices: [serviceUuid] // Still mention the service to interact with later
+});
+
 
                 // Clear the device list and add the discovered device
                 const deviceList = document.getElementById('deviceList');
