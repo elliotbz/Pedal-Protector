@@ -95,16 +95,26 @@
         }
 
         // Function to send a command to the ESP32
-        async function sendCommand(command) {
-            if (characteristic) {
-                const encoder = new TextEncoder();
-                const commandData = encoder.encode(command);
-                await characteristic.writeValue(commandData);
-                console.log(`Sent command: ${command}`);
-            } else {
-                console.error("Not connected to ESP32");
-            }
-        }
+        async function connectToESP32() {
+    try {
+        // Request the device with a filter based on the service UUID
+        bleDevice = await navigator.bluetooth.requestDevice({
+            filters: [{ services: [serviceUuid] }] // Filter by relevant UUID
+        });
+
+        // Connect to GATT server
+        const server = await bleDevice.gatt.connect();
+
+        // Get the service and characteristic
+        const service = await server.getPrimaryService(serviceUuid);
+        characteristic = await service.getCharacteristic(characteristicUuid);
+
+        console.log("Connected to ESP32!");
+    } catch (error) {
+        console.error("Error connecting to ESP32:", error);
+    }
+}
+
 
         // Event listeners for buttons
         document.getElementById('connectBtn').addEventListener('click', connectToESP32);
