@@ -23,6 +23,7 @@
     <button id="forwardBtn" disabled>Move Forward</button>
     <button id="backwardBtn" disabled>Move Backward</button>
     <button id="stopBtn" disabled>Stop Motor</button>
+    <pre id="consoleOutput"></pre> <!-- Added to display console output -->
 
     <script>
         let bleDevice;
@@ -35,23 +36,20 @@
         // Function to scan for ESP32 devices
         async function scanForDevices() {
             try {
-                // Request the device with the given service UUID
-                bleDevice = await navigator.bluetooth.requestDevice({
-    acceptAllDevices: true,
-    optionalServices: [serviceUuid] // Still mention the service to interact with later
-});
+                const devices = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [serviceUuid] }]
+                });
 
-
-                // Clear the device list and add the discovered device
                 const deviceList = document.getElementById('deviceList');
-                deviceList.innerHTML = '';
+                deviceList.innerHTML = ''; // Clear previous devices
                 const listItem = document.createElement('li');
                 listItem.textContent = devices.name || 'Unnamed device';
                 listItem.onclick = () => connectToDevice(devices);
                 deviceList.appendChild(listItem);
+                consoleLog(`Found device: ${devices.name || 'Unnamed device'}`);
 
             } catch (error) {
-                console.error("Error scanning for devices:", error);
+                consoleLog("Error scanning for devices: " + error);
             }
         }
 
@@ -59,11 +57,13 @@
         async function connectToDevice(device) {
             try {
                 bleDevice = device;
+                consoleLog(`Connecting to ${bleDevice.name}...`);
+                
                 const server = await bleDevice.gatt.connect();
                 const service = await server.getPrimaryService(serviceUuid);
                 characteristic = await service.getCharacteristic(characteristicUuid);
 
-                console.log("Connected to ESP32!");
+                consoleLog("Connected to ESP32!");
 
                 // Enable buttons
                 document.getElementById('forwardBtn').disabled = false;
@@ -71,20 +71,31 @@
                 document.getElementById('stopBtn').disabled = false;
 
             } catch (error) {
-                console.error("Error connecting to device:", error);
+                consoleLog("Error connecting to device: " + error);
             }
         }
 
         // Function to send a command to the ESP32
         async function sendCommand(command) {
             if (characteristic) {
-                const encoder = new TextEncoder();
-                const commandData = encoder.encode(command);
-                await characteristic.writeValue(commandData);
-                console.log(`Sent command: ${command}`);
+                try {
+                    const encoder = new TextEncoder();
+                    const commandData = encoder.encode(command);
+                    await characteristic.writeValue(commandData);
+                    consoleLog(`Sent command: ${command}`);
+                } catch (error) {
+                    consoleLog("Error sending command: " + error);
+                }
             } else {
-                console.error("Not connected to ESP32");
+                consoleLog("Not connected to ESP32");
             }
+        }
+
+        // Function to log messages to the console output
+        function consoleLog(message) {
+            const consoleOutput = document.getElementById('consoleOutput');
+            consoleOutput.textContent += message + '\n'; // Append message
+            console.log(message); // Also log to the developer console
         }
 
         // Event listeners for buttons
@@ -95,3 +106,4 @@
     </script>
 </body>
 </html>
+
