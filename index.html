@@ -18,9 +18,10 @@
         async function sendCommand(command) {
             try {
                 // Request BLE device
-                const device = await navigator.bluetooth.requestDevice({
-                     filters: [{ name: 'ESP32_Motor_Control' }]  // Filter by name only
-                });
+                bleDevice = await navigator.bluetooth.requestDevice({
+    acceptAllDevices: true,
+    optionalServices: [serviceUuid] // Still mention the service to interact with later
+});
 
                 // Connect to the GATT server and get the service and characteristic
                 const server = await device.gatt.connect();
