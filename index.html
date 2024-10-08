@@ -19,7 +19,7 @@
             try {
                 // Request BLE device
                 const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [SERVICE_UUID] }]
+                     filters: [{ name: 'ESP32_Motor_Control' }]  // Filter by name only
                 });
 
                 // Connect to the GATT server and get the service and characteristic
