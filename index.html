@@ -75,9 +75,11 @@
         async function connectToESP32() {
             try {
                 // Request the device with the given service UUID
-                bleDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [serviceUuid] }]
-                });
+             bleDevice = await navigator.bluetooth.requestDevice({
+    acceptAllDevices: true,
+    optionalServices: [serviceUuid] // Still mention the service to interact with later
+});
+
 
                 // Connect to GATT server
                 const server = await bleDevice.gatt.connect();
