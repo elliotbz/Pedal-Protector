@@ -5,29 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32 Motor Control</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 20px;
-        }
         button {
             margin: 10px;
             padding: 10px;
             font-size: 16px;
         }
         #deviceList {
-            margin-top: 20px;
+            margin: 10px;
+            list-style-type: none;
         }
     </style>
 </head>
 <body>
     <h1>ESP32 Motor Control</h1>
-    <button id="connectBtn">Connect to Bluetooth Device</button>
-    <div id="deviceList"></div>
-    <br>
-    <button id="forwardBtn">Move Forward</button>
-    <button id="backwardBtn">Move Backward</button>
-    <button id="stopBtn">Stop Motor</button>
+    <button id="scanBtn">Scan for Devices</button>
+    <ul id="deviceList"></ul>
+    <button id="forwardBtn" disabled>Move Forward</button>
+    <button id="backwardBtn" disabled>Move Backward</button>
+    <button id="stopBtn" disabled>Stop Motor</button>
 
     <script>
         let bleDevice;
@@ -37,44 +32,44 @@
         const serviceUuid = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
         const characteristicUuid = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 
-        // Function to connect to the selected Bluetooth device
-        async function connectToDevice(device) {
+        // Function to scan for ESP32 devices
+        async function scanForDevices() {
             try {
-                // Connect to GATT server
-                const server = await device.gatt.connect();
+                // Request the device with the given service UUID
+                const devices = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [serviceUuid] }]
+                });
 
-                // Get the service and characteristic
-                const service = await server.getPrimaryService(serviceUuid);
-                characteristic = await service.getCharacteristic(characteristicUuid);
+                // Clear the device list and add the discovered device
+                const deviceList = document.getElementById('deviceList');
+                deviceList.innerHTML = '';
+                const listItem = document.createElement('li');
+                listItem.textContent = devices.name || 'Unnamed device';
+                listItem.onclick = () => connectToDevice(devices);
+                deviceList.appendChild(listItem);
 
-                console.log(`Connected to ${device.name}`);
-                alert(`Connected to ${device.name}!`);
             } catch (error) {
-                console.error("Error connecting to device:", error);
+                console.error("Error scanning for devices:", error);
             }
         }
 
-        // Function to request and display Bluetooth devices
-        async function requestBluetoothDevices() {
+        // Function to connect to the selected ESP32 device
+        async function connectToDevice(device) {
             try {
-                // Request Bluetooth devices
-                const devices = await navigator.bluetooth.getDevices();
-                const deviceList = document.getElementById('deviceList');
-                deviceList.innerHTML = ''; // Clear previous list
+                bleDevice = device;
+                const server = await bleDevice.gatt.connect();
+                const service = await server.getPrimaryService(serviceUuid);
+                characteristic = await service.getCharacteristic(characteristicUuid);
 
-                // Create buttons for each available device
-                devices.forEach(device => {
-                    const button = document.createElement('button');
-                    button.innerText = `Connect to ${device.name}`;
-                    button.onclick = () => connectToDevice(device);
-                    deviceList.appendChild(button);
-                });
+                console.log("Connected to ESP32!");
 
-                if (devices.length === 0) {
-                    deviceList.innerHTML = 'No Bluetooth devices found.';
-                }
+                // Enable buttons
+                document.getElementById('forwardBtn').disabled = false;
+                document.getElementById('backwardBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = false;
+
             } catch (error) {
-                console.error("Error requesting devices:", error);
+                console.error("Error connecting to device:", error);
             }
         }
 
@@ -91,7 +86,7 @@
         }
 
         // Event listeners for buttons
-        document.getElementById('connectBtn').addEventListener('click', requestBluetoothDevices);
+        document.getElementById('scanBtn').addEventListener('click', scanForDevices);
         document.getElementById('forwardBtn').addEventListener('click', () => sendCommand('F'));
         document.getElementById('backwardBtn').addEventListener('click', () => sendCommand('B'));
         document.getElementById('stopBtn').addEventListener('click', () => sendCommand('S'));
