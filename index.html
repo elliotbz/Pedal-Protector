@@ -1,3 +1,46 @@
+<!--<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 BLE Motor Control</title>
+</head>
+<body>
+    <h1>ESP32 BLE Motor Control</h1>
+    <button onclick="sendCommand('F')">Forward</button>
+    <button onclick="sendCommand('B')">Backward</button>
+    <button onclick="sendCommand('S')">Stop</button>
+
+    <script>
+        const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b'; // Service UUID (matches ESP32 code)
+        const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8'; // Characteristic UUID (matches ESP32 code)
+
+        async function sendCommand(command) {
+            try {
+                // Request BLE device
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [SERVICE_UUID] }]
+                });
+
+                // Connect to the GATT server and get the service and characteristic
+                const server = await device.gatt.connect();
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                const characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+                // Send command to ESP32
+                const commandData = new Uint8Array([command.charCodeAt(0)]);
+                await characteristic.writeValue(commandData);
+                console.log(`Sent command: ${command}`);
+            } catch (error) {
+                console.error(error);
+                alert('Failed to send command. Please check the BLE connection.');
+            }
+        }
+    </script>
+</body>
+</html>
+-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,20 +53,15 @@
             padding: 10px;
             font-size: 16px;
         }
-        #deviceList {
-            margin: 10px;
-            list-style-type: none;
-        }
     </style>
 </head>
 <body>
     <h1>ESP32 Motor Control</h1>
-    <button id="scanBtn">Scan for Devices</button>
-    <ul id="deviceList"></ul>
-    <button id="forwardBtn" disabled>Move Forward</button>
-    <button id="backwardBtn" disabled>Move Backward</button>
-    <button id="stopBtn" disabled>Stop Motor</button>
-    <pre id="consoleOutput"></pre> <!-- Added to display console output -->
+    <button id="connectBtn">Connect to ESP32</button>
+    <br>
+    <button id="forwardBtn">Move Forward</button>
+    <button id="backwardBtn">Move Backward</button>
+    <button id="stopBtn">Stop Motor</button>
 
     <script>
         let bleDevice;
@@ -33,73 +71,43 @@
         const serviceUuid = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
         const characteristicUuid = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 
-        // Function to scan for ESP32 devices
-        async function scanForDevices() {
+        // Function to connect to ESP32 via BLE
+        async function connectToESP32() {
             try {
-                const devices = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [serviceUuid] }]
-                });
+                // Request the device with the given service UUID
+             bleDevice = await navigator.bluetooth.requestDevice({
+    acceptAllDevices: true,
+    optionalServices: [serviceUuid] // Still mention the service to interact with later
+});
 
-                const deviceList = document.getElementById('deviceList');
-                deviceList.innerHTML = ''; // Clear previous devices
-                const listItem = document.createElement('li');
-                listItem.textContent = devices.name || 'Unnamed device';
-                listItem.onclick = () => connectToDevice(devices);
-                deviceList.appendChild(listItem);
-                consoleLog(`Found device: ${devices.name || 'Unnamed device'}`);
 
-            } catch (error) {
-                consoleLog("Error scanning for devices: " + error);
-            }
-        }
-
-        // Function to connect to the selected ESP32 device
-        async function connectToDevice(device) {
-            try {
-                bleDevice = device;
-                consoleLog(`Connecting to ${bleDevice.name}...`);
-                
+                // Connect to GATT server
                 const server = await bleDevice.gatt.connect();
+
+                // Get the service and characteristic
                 const service = await server.getPrimaryService(serviceUuid);
                 characteristic = await service.getCharacteristic(characteristicUuid);
 
-                consoleLog("Connected to ESP32!");
-
-                // Enable buttons
-                document.getElementById('forwardBtn').disabled = false;
-                document.getElementById('backwardBtn').disabled = false;
-                document.getElementById('stopBtn').disabled = false;
-
+                console.log("Connected to ESP32!");
             } catch (error) {
-                consoleLog("Error connecting to device: " + error);
+                console.error("Error connecting to ESP32:", error);
             }
         }
 
         // Function to send a command to the ESP32
         async function sendCommand(command) {
             if (characteristic) {
-                try {
-                    const encoder = new TextEncoder();
-                    const commandData = encoder.encode(command);
-                    await characteristic.writeValue(commandData);
-                    consoleLog(`Sent command: ${command}`);
-                } catch (error) {
-                    consoleLog("Error sending command: " + error);
-                }
+                const encoder = new TextEncoder();
+                const commandData = encoder.encode(command);
+                await characteristic.writeValue(commandData);
+                console.log(`Sent command: ${command}`);
             } else {
-                consoleLog("Not connected to ESP32");
+                console.error("Not connected to ESP32");
             }
         }
 
-        // Function to log messages to the console output
-        function consoleLog(message) {
-            const consoleOutput = document.getElementById('consoleOutput');
-            consoleOutput.textContent += message + '\n'; // Append message
-            console.log(message); // Also log to the developer console
-        }
-
         // Event listeners for buttons
-        document.getElementById('scanBtn').addEventListener('click', scanForDevices);
+        document.getElementById('connectBtn').addEventListener('click', connectToESP32);
         document.getElementById('forwardBtn').addEventListener('click', () => sendCommand('F'));
         document.getElementById('backwardBtn').addEventListener('click', () => sendCommand('B'));
         document.getElementById('stopBtn').addEventListener('click', () => sendCommand('S'));
