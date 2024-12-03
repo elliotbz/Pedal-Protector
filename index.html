@@ -10,14 +10,53 @@
             padding: 10px;
             font-size: 16px;
         }
+        #lockControl, #errorMessage {
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <h1>Lock Control</h1>
-    <button id="connectBtn">Connect to ESP32</button>
-    <div id="controls"></div>
+    <div id="loginPage">
+        <h1>Login</h1>
+        <label for="username">Username:</label>
+        <input type="text" id="username" required>
+        <br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" required>
+        <br>
+        <button id="loginBtn">Login</button>
+        <p id="errorMessage" style="color: red;">Invalid username or password. Please try again.</p>
+    </div>
+
+    <div id="lockControl">
+        <h1>Lock Control</h1>
+        <button id="connectBtn">Connect to ESP32</button>
+        <div id="controls"></div>
+    </div>
 
     <script>
+        const correctUsername = "offeneTür";
+        const correctPassword = "2024";
+
+        const loginBtn = document.getElementById('loginBtn');
+        const loginPage = document.getElementById('loginPage');
+        const lockControl = document.getElementById('lockControl');
+        const errorMessage = document.getElementById('errorMessage');
+
+        loginBtn.addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === correctUsername && password === correctPassword) {
+                // Successful login
+                loginPage.style.display = 'none';
+                lockControl.style.display = 'block';
+            } else {
+                // Show error message
+                errorMessage.style.display = 'block';
+            }
+        });
+
         let bleDevice;
         let characteristic;
         let lockState = "locked"; // Initial state: locked
