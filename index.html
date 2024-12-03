@@ -37,9 +37,15 @@
                 characteristic = await service.getCharacteristic(characteristicUuid);
 
                 console.log("Connected to ESP32!");
+
+                // Hide the connect button
+                document.getElementById('connectBtn').style.display = 'none';
                 updateControls();
             } catch (error) {
                 console.error("Error connecting to ESP32:", error);
+                alert("Failed to connect. Please try again.");
+                // Show the connect button in case of failure
+                document.getElementById('connectBtn').style.display = 'block';
             }
         }
 
