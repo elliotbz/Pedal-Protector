@@ -78,7 +78,7 @@
                         await sendCommand('S');
                         lockState = "unlocked";
                         updateControls();
-                    }, 6000);
+                    }, 8000);
                 };
                 controlsDiv.appendChild(unlockButton);
             } else if (lockState === "unlocked") {
@@ -90,7 +90,7 @@
                         await sendCommand('S');
                         lockState = "locked";
                         updateControls();
-                    }, 6000);
+                    }, 8000);
                 };
                 controlsDiv.appendChild(lockButton);
             }
