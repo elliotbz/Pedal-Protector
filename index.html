@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lock Control</title>
+    <title>Smart Lock Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        button {
-            margin: 10px;
-            padding: 10px;
-            font-size: 16px;
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
         }
-        #controls {
-            margin-top: 20px;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
-<body>
-    <div id="lockControl">
-        <h1>Lock Control</h1>
-        <button id="connectBtn">Connect to ESP32</button>
-        <div id="controls"></div>
+<body class="bg-gray-900 text-white flex items-center justify-center h-screen">
+    <div class="text-center p-6 bg-gray-800 rounded-lg shadow-lg w-96 fade-in">
+        <h1 class="text-3xl font-semibold mb-4">🔒 Smart Lock Control</h1>
+        <button id="connectBtn" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition ease-in-out">Connect to ESP32</button>
+        <div id="controls" class="mt-4"></div>
     </div>
 
     <script>
@@ -36,21 +36,15 @@
                     filters: [{ name: "ESP32_Motor_Control" }],
                     optionalServices: [serviceUuid]
                 });
-
                 const server = await bleDevice.gatt.connect();
                 const service = await server.getPrimaryService(serviceUuid);
                 characteristic = await service.getCharacteristic(characteristicUuid);
-
                 console.log("Connected to ESP32!");
-
-                // Hide the connect button
-                document.getElementById('connectBtn').style.display = 'none';
+                document.getElementById('connectBtn').classList.add('hidden');
                 updateControls();
             } catch (error) {
                 console.error("Error connecting to ESP32:", error);
                 alert("Failed to connect. Please try again.");
-                // Show the connect button in case of failure
-                document.getElementById('connectBtn').style.display = 'block';
             }
         }
 
@@ -67,12 +61,15 @@
 
         function updateControls() {
             const controlsDiv = document.getElementById('controls');
-            controlsDiv.innerHTML = ''; // Clear current controls
-
+            controlsDiv.innerHTML = '';
+            
+            const button = document.createElement('button');
+            button.className = "py-2 px-4 rounded-lg font-bold text-white transition ease-in-out";
+            
             if (lockState === "locked") {
-                const unlockButton = document.createElement('button');
-                unlockButton.textContent = "Unlock";
-                unlockButton.onclick = async () => {
+                button.textContent = "🔓 Unlock";
+                button.classList.add("bg-green-500", "hover:bg-green-600");
+                button.onclick = async () => {
                     await sendCommand('F');
                     setTimeout(async () => {
                         await sendCommand('S');
@@ -80,11 +77,10 @@
                         updateControls();
                     }, 8000);
                 };
-                controlsDiv.appendChild(unlockButton);
-            } else if (lockState === "unlocked") {
-                const lockButton = document.createElement('button');
-                lockButton.textContent = "Lock";
-                lockButton.onclick = async () => {
+            } else {
+                button.textContent = "🔒 Lock";
+                button.classList.add("bg-red-500", "hover:bg-red-600");
+                button.onclick = async () => {
                     await sendCommand('B');
                     setTimeout(async () => {
                         await sendCommand('S');
@@ -92,12 +88,14 @@
                         updateControls();
                     }, 8000);
                 };
-                controlsDiv.appendChild(lockButton);
             }
+            
+            controlsDiv.appendChild(button);
         }
 
         document.getElementById('connectBtn').addEventListener('click', connectToESP32);
-        updateControls(); // Initialize controls based on the initial lock state
+        updateControls();
     </script>
 </body>
 </html>
+
